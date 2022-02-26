@@ -1,2 +1,2 @@
-# BachlorProefCommunicatieEnEinde
-De repository van Henri Vandeputte
+# BachlorProef: Communicatie en einde.
+Repository van Henri Vandeputte
