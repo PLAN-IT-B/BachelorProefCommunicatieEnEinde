@@ -41,8 +41,7 @@ void setup()
   {
     for (int i = 0; i < 4; i++)
     {
-      myGLCD.fillRoundRect(10,100, 240, 160, 3,TFT_LIGHT);
-      x=x+40;
+      myGLCD.fillRoundRect(10+i*50, 60+i*70, 40, 40, 3,TFT_LIGHT);
     }
     y=y+50;
 
