@@ -63,6 +63,22 @@ void callback(char *topic, byte *message, unsigned int length)
   Serial.println();
 
   // Feel free to add more if statements to control more GPIOs with MQTT
+    // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
+    // Changes the output state according to the message
+    // if (String(topic) == "esp32/output")
+    // {
+    //   Serial.print("Changing output to ");
+    //   if (messageTemp == "on")
+    //   {
+    //     Serial.println("on");
+    //     digitalWrite(LED_PIN, HIGH);
+    //   }
+    //   else if (messageTemp == "off")
+    //   {
+    //     Serial.println("off");
+    //     digitalWrite(LED_PIN, LOW);
+    //   }
+    // }
 }
 
 void reconnect()
@@ -79,6 +95,7 @@ void reconnect()
       Serial.println("connected");
       // Subscribe
       // Vul hieronder in naar welke directories je gaat luisteren.
+      //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
       client.subscribe("controlpanel/reset");
     }
     else
@@ -106,6 +123,7 @@ void loop()
   }
 
   //Hieronder kan je beginnen werken aan wanneer je wat en waar gaat publishen.
+  //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
   client.publish("controlpanel/reset","Reset escaperoom");
   delay(3000);
   
