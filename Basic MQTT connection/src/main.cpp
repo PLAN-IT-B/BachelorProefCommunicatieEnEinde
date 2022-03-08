@@ -4,7 +4,7 @@
 #define SSID          "NETGEAR68"
 #define PWD           "excitedtuba713"
 
-#define MQTT_SERVER   "192.168.1.20"
+#define MQTT_SERVER   "192.168.1.2"
 #define MQTT_PORT     1883
 
 #define LED_PIN       2
@@ -78,7 +78,8 @@ void reconnect()
     {
       Serial.println("connected");
       // Subscribe
-      client.subscribe("input/#");
+      //client.subscribe("input/#");
+      client.subscribe("controlpanel/status");
     }
     else
     {
@@ -104,12 +105,9 @@ void loop()
     lastMsg = now;
   }
 
+
+  client.publish("controlpanel/reset","Reset escaperoom");
   delay(3000);
-  const char* on = "on";
-  client.publish("esp32/output", on);
-  delay(300);
-  const char* off = "off";
-   client.publish("esp32/output", off);
   
 
 }
