@@ -72,14 +72,14 @@ void reconnect()
   {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    // creat unique client ID
+    // CREATE UNIQUE client ID!
     // in Mosquitto broker enable anom. access
     if (client.connect("ESP8266Client"))
     {
       Serial.println("connected");
       // Subscribe
-      //client.subscribe("input/#");
-      client.subscribe("controlpanel/status");
+      // Vul hieronder in naar welke directories je gaat luisteren.
+      client.subscribe("controlpanel/reset");
     }
     else
     {
@@ -105,7 +105,7 @@ void loop()
     lastMsg = now;
   }
 
-
+  //Hieronder kan je beginnen werken aan wanneer je wat en waar gaat publishen.
   client.publish("controlpanel/reset","Reset escaperoom");
   delay(3000);
   
