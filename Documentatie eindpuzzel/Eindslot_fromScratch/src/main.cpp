@@ -97,6 +97,7 @@ int seconds, minutes;             // For switching between left & right part of 
 }
   //for restart button
   void IRAM_ATTR ISR_restart() {
+    client.publish("controlpanel/reset","Reset escaperoom");
     ESP.restart();
   }
   //for restart button
@@ -133,7 +134,7 @@ void reconnect()
     // Attempt to connect
     // CREATE UNIQUE client ID!
     // in Mosquitto broker enable anom. access
-    if (client.connect("ESP8266Client"))
+    if (client.connect("ESP8266Client1"))
     {
       Serial.println("connected");
       // Subscribe
@@ -240,18 +241,6 @@ void loop() {
   startbutton_status = digitalRead(startpin);
   resetbutton_status = digitalRead(resetpin);
 
-  // if(startbutton_status == HIGH){
-  //   //doe iets om de timer te starten
-  //   delay(500);
-  //   Serial.println("startknop");    
-  //   timerAlarmEnable(timer); 
-  // }
-  // if(resetbutton_status == HIGH){
-  //   //doe iets om een signaal te sturen naar de rest van de puzzels
-  //   delay(500);
-  //   Serial.println("resetknop");
-  //   ESP.restart();
-  // }
   char key = customKeypad.getKey();
   
   if(opgelost == true){ //Als de code klopt 
