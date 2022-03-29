@@ -1,0 +1,10 @@
+(sym_lib_table
+  (lib (name "degson")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/degson/degson.lib")(options "")(descr ""))
+  (lib (name "3-1825910-1")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/3-1825910-1.lib")(options "")(descr ""))
+  (lib (name "15EDGRC-3.5-2P")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/15EDGRC-3.5-2P.lib")(options "")(descr ""))
+  (lib (name "AMS1117")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/AMS1117.lib")(options "")(descr ""))
+  (lib (name "B3F-4050")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/B3F-4050.lib")(options "")(descr ""))
+  (lib (name "ESP-WROOM-32")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/ESP-WROOM-32.lib")(options "")(descr ""))
+  (lib (name "SRD-05VDC-SL-C")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/SRD-05VDC-SL-C.lib")(options "")(descr ""))
+  (lib (name "USB3090-XX-X_REVE")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/USB3090-XX-X_REVE.lib")(options "")(descr ""))
+)

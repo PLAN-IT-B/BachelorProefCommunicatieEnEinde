@@ -26,8 +26,8 @@ void callback(char *topic, byte *message, unsigned int length);
 bool opgelost = false;
 
 //Start reset knoppen
-const int startpin = 32;
-const int resetpin = 33;
+const int startpin = 14;
+const int resetpin = 13;
 
 int startbutton_status = 0;
 int resetbutton_status = 0;
@@ -48,9 +48,9 @@ char hexaKeys[ROWS][COLS] = {
   {'*', '0', '#'}
 };
 
-byte rowPins[ROWS] = {18, 5, 17, 16}; // <= De pinnen van de arduino
+byte rowPins[ROWS] = {18, 5, 17, 16}; // <= De pinnen van de esp
                     //2, 7, 6, 4  <= de pinnen van de keypad
-byte colPins[COLS] = {4, 15, 2}; // <= De pinnen van de arduino
+byte colPins[COLS] = {4, 15, 2}; // <= De pinnen van de esp
                     //3, 1, 5 <= de pinnen van de keypad
 
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
@@ -60,7 +60,7 @@ LiquidCrystal_I2C lcd(0x27,20,4);
 int c =8; //pointer x-as
 
 //Relais 
-const int relaispin = 19;
+const int Relais_Sol = 32;
 
 // Clock display pins (digital pins)
 #define CLK 26
@@ -97,7 +97,7 @@ int seconds, minutes;             // For switching between left & right part of 
 }
   //for restart button
   void IRAM_ATTR ISR_restart() {
-    client.publish("controlpanel/reset","Reset escaperoom");
+    //client.publish("controlpanel/reset","Reset escaperoom");
     ESP.restart();
   }
   //for restart button
@@ -134,7 +134,7 @@ void reconnect()
     // Attempt to connect
     // CREATE UNIQUE client ID!
     // in Mosquitto broker enable anom. access
-    if (client.connect("ESP8266Client1"))
+    if (client.connect("Eindpuzzel_ESP"))
     {
       Serial.println("connected");
       // Subscribe
@@ -146,9 +146,9 @@ void reconnect()
     {
       Serial.print("failed, rc=");
       Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      Serial.println(" try again in 2 seconds");
       // Wait 5 seconds before retrying
-      delay(5000);
+      delay(2000);
     }
   }
 }
@@ -169,10 +169,11 @@ void callback(char *topic, byte *message, unsigned int length)
 }
 
 void setup() {
-  pinMode(relaispin,OUTPUT); 
+  pinMode(Relais_Sol,OUTPUT); 
   pinMode(startpin, INPUT);
   pinMode(resetpin, INPUT);
   Serial.begin (115200);
+  digitalWrite(Relais_Sol, LOW);
   Serial.print("begin search");
   Wire.begin();
   byte count = 0;
@@ -223,6 +224,28 @@ void setup() {
   lcd.print("____");
 }
 
+void openDeur(){
+  //Opent de deur van de escape room
+  digitalWrite(Relais_Sol, HIGH);
+    timerAlarmDisable(timer);
+    for (size_t i = 0; i < 50; i++)
+    {
+      lcd.clear();
+      delay(100);
+      lcd.setCursor(4,1);
+      lcd.print("Code correct!");
+      lcd.setCursor(2,2);
+      lcd.print("De deur is open!");
+      delay(200);
+    }
+    opgelost = false;
+    for (int i = 0; i < 4; i++)
+    {
+      cinput[i]=0;
+    }
+    digitalWrite(Relais_Sol, LOW);
+}
+
 void loop() {
   //Connectie checken en tesnoods reconnecten
   if (!client.connected())
@@ -245,24 +268,7 @@ void loop() {
   
   if(opgelost == true){ //Als de code klopt 
     //gaat de deur open
-    digitalWrite(19, HIGH);
-    timerAlarmDisable(timer);
-    for (size_t i = 0; i < 50; i++)
-    {
-      lcd.clear();
-      delay(100);
-      lcd.setCursor(4,1);
-      lcd.print("Code correct!");
-      lcd.setCursor(2,2);
-      lcd.print("De deur is open!");
-      delay(200);
-    }
-    opgelost = false;
-    for (int i = 0; i < 4; i++)
-    {
-      cinput[i]=0;
-    }
-    digitalWrite(19, LOW);
+    openDeur();    
   }
   else{
 
@@ -316,3 +322,4 @@ void loop() {
   }
 
 }
+
