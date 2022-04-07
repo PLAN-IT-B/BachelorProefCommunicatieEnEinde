@@ -103,7 +103,7 @@
         "allow_blind_buried_vias": false,
         "allow_microvias": false,
         "max_error": 0.005,
-        "min_clearance": 0.15239999999999998,
+        "min_clearance": 0.0,
         "min_copper_edge_clearance": 0.0,
         "min_hole_clearance": 0.25,
         "min_hole_to_hole": 0.25,
@@ -111,7 +111,7 @@
         "min_microvia_drill": 0.09999999999999999,
         "min_silk_clearance": 0.0,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.254,
+        "min_track_width": 0.19999999999999998,
         "min_via_annular_width": 0.049999999999999996,
         "min_via_diameter": 0.39999999999999997,
         "solder_mask_clearance": 0.0,
@@ -122,12 +122,21 @@
         0.0,
         0.5,
         1.0,
+        1.5,
         2.0
       ],
       "via_dimensions": [
         {
           "diameter": 0.0,
           "drill": 0.0
+        },
+        {
+          "diameter": 1.0,
+          "drill": 0.5
+        },
+        {
+          "diameter": 2.0,
+          "drill": 1.0
         }
       ],
       "zones_allow_external_fillets": false,
@@ -349,7 +358,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "Schakeling.kicad_pro",
+    "filename": "Schakeling_UV-Lock.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -428,7 +437,7 @@
   },
   "sheets": [
     [
-      "9538e4ed-27e6-4c37-b989-9859dc0d49e8",
+      "07cb7cd7-7eec-4235-96ac-b90f22b03edb",
       ""
     ]
   ],

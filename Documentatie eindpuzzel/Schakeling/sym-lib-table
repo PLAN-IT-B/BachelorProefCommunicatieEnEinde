@@ -7,4 +7,7 @@
   (lib (name "ESP-WROOM-32")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/ESP-WROOM-32.lib")(options "")(descr ""))
   (lib (name "SRD-05VDC-SL-C")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/SRD-05VDC-SL-C.lib")(options "")(descr ""))
   (lib (name "USB3090-XX-X_REVE")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/USB3090-XX-X_REVE.lib")(options "")(descr ""))
+  (lib (name "282841-7")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/282841-7.lib")(options "")(descr ""))
+  (lib (name "282841-2")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/282841-2.lib")(options "")(descr ""))
+  (lib (name "BC817")(type "Legacy")(uri "C:/Users/Admin/OneDrive/Bureaublad/components/BC817.lib")(options "")(descr ""))
 )
