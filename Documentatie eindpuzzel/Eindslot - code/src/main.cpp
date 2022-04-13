@@ -48,9 +48,9 @@ char hexaKeys[ROWS][COLS] = {
   {'*', '0', '#'}
 };
 
-byte rowPins[ROWS] = {18, 5, 17, 16}; // <= De pinnen van de esp
+byte rowPins[ROWS] = {18, 5, 17, 16}; // <= De IO pinnen van de esp
                     //2, 7, 6, 4  <= de pinnen van de keypad
-byte colPins[COLS] = {4, 15, 2}; // <= De pinnen van de esp
+byte colPins[COLS] = {4, 15, 2}; // <= De IO pinnen van de esp
                     //3, 1, 5 <= de pinnen van de keypad
 
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
@@ -97,10 +97,10 @@ int seconds, minutes;             // For switching between left & right part of 
 }
   //for restart button
   void IRAM_ATTR ISR_restart() {
-    //client.publish("controlpanel/reset","Reset escaperoom");
+    client.publish("controlpanel/reset","Reset escaperoom");
     ESP.restart();
   }
-  //for restart button
+  //for start button
    void IRAM_ATTR ISR_start() {
     timerAlarmEnable(timer); 
   }
