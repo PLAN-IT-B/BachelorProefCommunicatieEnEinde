@@ -37,7 +37,7 @@ int startbutton_status = 0;
 int resetbutton_status = 0;
 
 //code slot
-int cinput[4];
+int cinput[6];
 int code[] = {1,1,1,1};
 
 //
