@@ -20,28 +20,15 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-int ledflag =0;
-
 void callback(char *topic, byte *message, unsigned int length);
 
 
 bool opgelost = false;
 
-//Start reset knoppen
-const int startpin = 14;
-const int resetpin = 13;
-const int resetled = 23;
-bool resetled_ON = false;
-
-int startbutton_status = 0;
-int resetbutton_status = 0;
-
 //code slot
 int cinput[4];
 int code[] = {1,1,1,1};
 
-//
-bool enterRoom = false;
 
 //keypad configuratie
 const byte ROWS = 4; 
@@ -66,18 +53,7 @@ LiquidCrystal_I2C lcd(0x27,20,4);
 int c =8; //pointer x-as
 
 //Relais 
-const int Relais_Sol = 32;
-
-// Clock display pins (digital pins)
-#define CLK 26
-#define DIO 25
-TM1637Display display = TM1637Display(CLK, DIO);
-
-//timer interrupt
-int t1 = 0;
-int t2 = 0;
-int adc_read_counter = 0;
-hw_timer_t * timer = NULL; 
+const int Relais_UV = 32;
 
 // Global Variables
 long int count_time = 3600000;       // 1000ms in 1sec, 60secs in 1min, 60mins in 1hr. So, 1000x60x60 = 3600000ms = 1hr
@@ -86,58 +62,6 @@ unsigned long current_time = 0;
 unsigned long previous_time = 0;
 volatile short int start_pause = 0;
 int seconds, minutes;             // For switching between left & right part of the display(Even = left, Odd = right)
-
-
-//interupt handlers
-  //for timer
-  void IRAM_ATTR onTimer() {
-  NewTime = count_time - 1;                       // Calculate the time remaining 
-    
-  seconds = (NewTime % 60);                       // To display the countdown in mm:ss format
-  minutes = ((NewTime / 60) % 60 );               //separate CountTime in two parts
-  
-  display.showNumberDecEx(seconds, 0, true, 2, 2); // Display the seconds in the last two places
-  display.showNumberDecEx(minutes, 0b11100000, true, 2, 0); // Display the minutes in the first two places, with colon
-
-  count_time = NewTime;                  // Update the time remaining
-}
-  //for restart button
-  void IRAM_ATTR ISR_restart() {
-    if(digitalRead(resetpin) ==HIGH){
-      if(ledflag ==0){
-        ledflag=1;
-        digitalWrite(resetled,HIGH);      }
-      else {
-        ledflag=0;
-        digitalWrite(resetled,LOW);
-      }
-    }
-
-    /*if (resetled_ON==true)
-    {
-      digitalWrite(resetled, LOW);
-      resetled_ON = false;
-    }else if(resetled_ON==false)
-    {
-      digitalWrite(resetled, HIGH);
-      resetled_ON = true;
-    }*/
-    
-  }
-
-
-  //for start button
-  void enter_room(){
-    digitalWrite(Relais_Sol, HIGH);
-    delay(30000);
-    timerAlarmEnable(timer); 
-    digitalWrite(Relais_Sol, LOW);
-  }
-  void IRAM_ATTR ISR_start() {
-   enterRoom=true;
-  }
-
-
 
 
 void setup_wifi()
@@ -168,7 +92,7 @@ void reconnect()
     // Attempt to connect
     // CREATE UNIQUE client ID!
     // in Mosquitto broker enable anom. access
-    if (client.connect("Eindpuzzel_ESP"))
+    if (client.connect("UV-Slot_ESP"))
     {
       Serial.println("connected");
       // Subscribe
@@ -203,12 +127,9 @@ void callback(char *topic, byte *message, unsigned int length)
 }
 
 void setup() {
-  pinMode(Relais_Sol,OUTPUT); 
-  pinMode(resetled,OUTPUT);
-  pinMode(startpin, INPUT);
-  pinMode(resetpin, INPUT);
+  pinMode(Relais_UV,OUTPUT); 
   Serial.begin (115200);
-  digitalWrite(Relais_Sol, LOW);
+  digitalWrite(Relais_UV, LOW);
   Serial.print("begin search");
   Wire.begin();
   byte count = 0;
@@ -236,18 +157,6 @@ void setup() {
   client.setServer(MQTT_SERVER, MQTT_PORT);
   client.setCallback(callback);
 
-  //timer interrupt setup
-  timer = timerBegin(0, 80, true);                //Begin timer with 1 MHz frequency (80MHz/80)
-  timerAttachInterrupt(timer, &onTimer, true);   //Attach the interrupt to Timer1
-  timerAlarmWrite(timer, 1000000, true);      //Initialize the timer. The 1000000 in this line means the alarm should go off every 1000000 cycles of the clock. 1000000/1000000 = 1s
-  
-  attachInterrupt(resetpin, ISR_restart, FALLING);
-  attachInterrupt(startpin, ISR_start, FALLING);
-
-  //default timer display setup
-  display.setBrightness(7);
-  display.showNumberDecEx(6000,0b01000000);
-  count_time = 3600000;
 
   //default lcd display setup
   lcd.init();
@@ -261,8 +170,7 @@ void setup() {
 
 void openDeur(){
   //Opent de deur van de escape room
-  digitalWrite(Relais_Sol, HIGH);
-    timerAlarmDisable(timer);
+  digitalWrite(Relais_UV, HIGH);
     for (size_t i = 0; i < 50; i++)
     {
       lcd.clear();
@@ -278,7 +186,7 @@ void openDeur(){
     {
       cinput[i]=0;
     }
-  digitalWrite(Relais_Sol, LOW);
+    digitalWrite(Relais_UV, LOW);
 }
 
 void loop() {
@@ -289,27 +197,11 @@ void loop() {
   }
   client.loop();
 
-
-  if (enterRoom)
-  {
-    digitalWrite(Relais_Sol, HIGH);
-    delay(30000);
-    timerAlarmEnable(timer); 
-    digitalWrite(Relais_Sol, LOW);
-    enterRoom = false;
-  }
-
-  
-
   long now = millis();
   if (now - lastMsg > 5000)
   {
     lastMsg = now;
   }
-
-  //Lezen wat de status is van de knoppen
-  startbutton_status = digitalRead(startpin);
-  resetbutton_status = digitalRead(resetpin);
 
   char key = customKeypad.getKey();
   
