@@ -130,15 +130,14 @@ void callback(char *topic, byte *message, unsigned int length)
   {
     for (int i = 0; i < 4; i++)
     {
-      code[i] = (int)message[i];
-      Serial.print("De code is veranderd naar ");
+      code[i] = message[i]-'0';
+    }
+    Serial.print("De code is veranderd naar ");
       for (int i = 0; i < 4; i++)
       {
         Serial.print(code[i]);
       }
       Serial.println();
-      
-    }
     
   }
   
