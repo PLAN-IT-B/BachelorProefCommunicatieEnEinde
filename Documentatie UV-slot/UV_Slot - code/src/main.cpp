@@ -27,7 +27,7 @@ bool opgelost = false;
 
 //code slot
 int cinput[4];
-int code[] = {1,1,1,1};
+int code[] = {1,2,3,4};
 
 
 //keypad configuratie
@@ -50,7 +50,7 @@ Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS)
 
 //LCD
 LiquidCrystal_I2C lcd(0x27,20,4);
-int c =8; //pointer x-as
+int c =6; //pointer x-as
 
 //Relais 
 const int Relais_UV = 32;
@@ -98,7 +98,8 @@ void reconnect()
       // Subscribe
       // Vul hieronder in naar welke directories je gaat luisteren.
       //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
-      client.subscribe("controlpanel/status");
+      client.subscribe("controlpanel/reset");
+      client.subscribe("uvslot");
     }
     else
     {
@@ -116,24 +117,37 @@ void callback(char *topic, byte *message, unsigned int length)
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
-  String messageTemp;
+  String messageTemp = "x";
 
   for (int i = 0; i < length; i++)
   {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-  Serial.println();
+
+  if (topic == "uvslot") 
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      code[i] = (int)message[i];
+      Serial.println("De code is veranderd naar " + messageTemp);
+    }
+    
+  }
+  
+  
+
 }
 
 void setup() {
+
   pinMode(Relais_UV,OUTPUT); 
   Serial.begin (115200);
   digitalWrite(Relais_UV, LOW);
   Serial.print("begin search");
   Wire.begin();
   byte count = 0;
-  for (byte i = 8; i < 120; i++)
+  for (byte i = 6; i < 120; i++)
   {
     Wire.beginTransmission (i);
     if (Wire.endTransmission () == 0)
@@ -162,31 +176,32 @@ void setup() {
   lcd.init();
   lcd.clear();         
   lcd.backlight(); 
-  lcd.setCursor(2,0);
+  lcd.setCursor(0,0);
   lcd.print("Voer de code in:");
-  lcd.setCursor(8,2);
+  lcd.setCursor(6,1);
   lcd.print("____");
 }
 
-void openDeur(){
+void UV_Enable(){
   //Opent de deur van de escape room
   digitalWrite(Relais_UV, HIGH);
-    for (size_t i = 0; i < 50; i++)
-    {
-      lcd.clear();
-      delay(100);
-      lcd.setCursor(4,1);
-      lcd.print("Code correct!");
-      lcd.setCursor(2,2);
-      lcd.print("De deur is open!");
-      delay(200);
-    }
-    opgelost = false;
-    for (int i = 0; i < 4; i++)
-    {
-      cinput[i]=0;
-    }
-    digitalWrite(Relais_UV, LOW);
+  lcd.clear();
+  lcd.setCursor(4,0);
+  lcd.print("Correct!");
+  lcd.setCursor(3,1);
+  lcd.print("Fiets maar");
+
+
+  opgelost = false;
+  for (int i = 0; i < 4; i++)
+  {
+    cinput[i]=0;
+  }
+
+
+  //Zeggen tegen de controle esp dat het UV-slot Ready is!
+  client.publish("controlpanel/status","UV-slot ready");
+
 }
 
 void loop() {
@@ -207,12 +222,12 @@ void loop() {
   
   if(opgelost == true){ //Als de code klopt 
     //gaat de deur open
-    openDeur();    
+    UV_Enable();    
   }
   else{
 
     //Als de knop wordt ingedrukt
-    if(key){
+    if(key && opgelost==false){
 
       /*
       Serial.print("De waarde uit het keypad is: ");
@@ -221,14 +236,14 @@ void loop() {
 
       //Als # (enter wordt ingedrukt)
       if(key =='#'){    
-        if(c ==12){ //De positie is het laatste cijfer
+        if(c ==10 ){ //De positie is het laatste cijfer
         opgelost = true; //Controleer of de code klopt
         for(int i = 0;i<4;i++){
           if(code[i]!=cinput[i]){
             opgelost = false;
-            lcd.setCursor(8,2);
+            lcd.setCursor(6,1);
             lcd.print("____");
-            c = 8;
+            c = 6;
           }
         }
         }
@@ -236,29 +251,25 @@ void loop() {
 
       else if(key == '*'){ //Als * (terug) wordt ingevuld
           //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
-        if(c>8){
+        if(c>6){
           c--;
-          lcd.setCursor(c,2);
+          lcd.setCursor(c,1);
           lcd.print("_");
-          cinput[c-8] = 0;
+          cinput[c-6] = 0;
         }
           
       }
-  
       else{ //Als er iets anders (cijfer) wordt ingedrukt
-        if(c<12){ //Vul het getal in en schuif 1 plaats op.
-        lcd.setCursor(c,2);
+        if(c<10){ //Vul het getal in en schuif 1 plaats op.
+        lcd.setCursor(c,1);
         lcd.print(key);
-        cinput[c-8]= key-'0';
-        lcd.setCursor(c,2);
+        cinput[c-6]= key-'0';
+        lcd.setCursor(c,1);
         c++;
         lcd.display();
         }    
       }
-    key == NULL; //Reset het key signaal
     }
-    
   }
-
 }
 
