@@ -24,6 +24,7 @@ void callback(char *topic, byte *message, unsigned int length);
 
 
 bool opgelost = false;
+bool blockKeypad = false;
 
 //code slot
 int cinput[4];
@@ -125,12 +126,18 @@ void callback(char *topic, byte *message, unsigned int length)
     messageTemp += (char)message[i];
   }
 
-  if (topic == "garbage/eindcode") 
+  if (strcmp(topic,"garbage/eindcode") == 0) 
   {
     for (int i = 0; i < 4; i++)
     {
       code[i] = (int)message[i];
-      Serial.println("De code is veranderd naar " + messageTemp);
+      Serial.print("De code is veranderd naar ");
+      for (int i = 0; i < 4; i++)
+      {
+        Serial.print(code[i]);
+      }
+      Serial.println();
+      
     }
     
   }
@@ -222,12 +229,14 @@ void loop() {
   
   if(opgelost == true){ //Als de code klopt 
     //gaat de deur open
-    UV_Enable();    
+    UV_Enable();   
+    blockKeypad = true;
+
   }
   else{
 
     //Als de knop wordt ingedrukt
-    if(key && opgelost==false){
+    if(key && blockKeypad == false){
 
       /*
       Serial.print("De waarde uit het keypad is: ");
