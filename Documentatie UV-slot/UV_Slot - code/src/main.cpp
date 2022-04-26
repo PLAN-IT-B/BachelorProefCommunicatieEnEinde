@@ -99,7 +99,7 @@ void reconnect()
       // Vul hieronder in naar welke directories je gaat luisteren.
       //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
       client.subscribe("controlpanel/reset");
-      client.subscribe("uvslot");
+      client.subscribe("garbage/eindcode");
     }
     else
     {
@@ -125,7 +125,7 @@ void callback(char *topic, byte *message, unsigned int length)
     messageTemp += (char)message[i];
   }
 
-  if (topic == "uvslot") 
+  if (topic == "garbage/eindcode") 
   {
     for (int i = 0; i < 4; i++)
     {
@@ -200,7 +200,7 @@ void UV_Enable(){
 
 
   //Zeggen tegen de controle esp dat het UV-slot Ready is!
-  client.publish("controlpanel/status","UV-slot ready");
+  client.publish("controlpanel/status","UV-slot Ready");
 
 }
 
