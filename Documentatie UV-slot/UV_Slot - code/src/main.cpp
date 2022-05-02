@@ -22,7 +22,7 @@ int value = 0;
 
 void callback(char *topic, byte *message, unsigned int length);
 
-
+bool garbage_Ready = false;
 bool opgelost = false;
 bool blockKeypad = false;
 
@@ -42,9 +42,9 @@ char hexaKeys[ROWS][COLS] = {
   {'*', '0', '#'}
 };
 
-byte rowPins[ROWS] = {18, 5, 17, 16}; // <= De IO pinnen van de esp
+byte rowPins[ROWS] = {19, 5, 18, 17}; // <= De IO pinnen van de esp
                     //2, 7, 6, 4  <= de pinnen van de keypad
-byte colPins[COLS] = {4, 15, 2}; // <= De IO pinnen van de esp
+byte colPins[COLS] = {4, 16, 2}; // <= De IO pinnen van de esp
                     //3, 1, 5 <= de pinnen van de keypad
 
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
@@ -82,6 +82,19 @@ void setup_wifi()
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+}
+
+void setup_keypad(){
+  garbage_Ready = true;
+  
+  //default lcd display setup
+  lcd.init();
+  lcd.clear();         
+  lcd.backlight(); 
+  lcd.setCursor(0,0);
+  lcd.print("Voer de code in:");
+  lcd.setCursor(6,1);
+  lcd.print("____");
 }
 
 void reconnect()
@@ -124,6 +137,7 @@ void callback(char *topic, byte *message, unsigned int length)
   {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
+    Serial.println();
   }
 
   if (strcmp(topic,"garbage/eindcode") == 0) 
@@ -137,13 +151,12 @@ void callback(char *topic, byte *message, unsigned int length)
       {
         Serial.print(code[i]);
       }
-      Serial.println();
-    
+    Serial.println(); 
+    setup_keypad();
   }
-  
-  
-
 }
+
+
 
 void setup() {
 
@@ -177,15 +190,6 @@ void setup() {
   client.setServer(MQTT_SERVER, MQTT_PORT);
   client.setCallback(callback);
 
-
-  //default lcd display setup
-  lcd.init();
-  lcd.clear();         
-  lcd.backlight(); 
-  lcd.setCursor(0,0);
-  lcd.print("Voer de code in:");
-  lcd.setCursor(6,1);
-  lcd.print("____");
 }
 
 void UV_Enable(){
@@ -224,60 +228,62 @@ void loop() {
     lastMsg = now;
   }
 
-  char key = customKeypad.getKey();
+  if(garbage_Ready==true){
+   char key = customKeypad.getKey();
   
-  if(opgelost == true){ //Als de code klopt 
-    //gaat de deur open
-    UV_Enable();   
-    blockKeypad = true;
+    if(opgelost == true){ //Als de code klopt 
+      //gaat de deur open
+      UV_Enable();   
+     blockKeypad = true;
 
-  }
-  else{
-
-    //Als de knop wordt ingedrukt
-    if(key && blockKeypad == false){
-
-      /*
-      Serial.print("De waarde uit het keypad is: ");
-      Serial.println(key);
-      */
-
-      //Als # (enter wordt ingedrukt)
-      if(key =='#'){    
-        if(c ==10 ){ //De positie is het laatste cijfer
-        opgelost = true; //Controleer of de code klopt
-        for(int i = 0;i<4;i++){
-          if(code[i]!=cinput[i]){
-            opgelost = false;
-            lcd.setCursor(6,1);
-            lcd.print("____");
-            c = 6;
-          }
-        }
-        }
-      }     
-
-      else if(key == '*'){ //Als * (terug) wordt ingevuld
-          //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
-        if(c>6){
-          c--;
-          lcd.setCursor(c,1);
-          lcd.print("_");
-          cinput[c-6] = 0;
-        }
-          
-      }
-      else{ //Als er iets anders (cijfer) wordt ingedrukt
-        if(c<10){ //Vul het getal in en schuif 1 plaats op.
-        lcd.setCursor(c,1);
-        lcd.print(key);
-        cinput[c-6]= key-'0';
-        lcd.setCursor(c,1);
-        c++;
-        lcd.display();
-        }    
-      }
     }
+    else{
+
+      //Als de knop wordt ingedrukt
+      if(key && blockKeypad == false){
+
+        /*
+        Serial.print("De waarde uit het keypad is: ");
+        Serial.println(key);
+        */
+
+        //Als # (enter wordt ingedrukt)
+        if(key =='#'){    
+          if(c ==10 ){ //De positie is het laatste cijfer
+            opgelost = true; //Controleer of de code klopt
+            for(int i = 0;i<4;i++){
+              if(code[i]!=cinput[i]){
+                opgelost = false;
+                lcd.setCursor(6,1);
+                lcd.print("____");
+                c = 6;
+              }
+            }
+          }
+        }     
+
+       else if(key == '*'){ //Als * (terug) wordt ingevuld
+            //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
+          if(c>6){
+            c--;
+            lcd.setCursor(c,1);
+            lcd.print("_");
+            cinput[c-6] = 0;
+          }
+          
+        }
+        else{ //Als er iets anders (cijfer) wordt ingedrukt
+         if(c<10){ //Vul het getal in en schuif 1 plaats op.
+         lcd.setCursor(c,1);
+          lcd.print(key);
+          cinput[c-6]= key-'0';
+          lcd.setCursor(c,1);
+          c++;
+          lcd.display();
+          }    
+        }
+      }
+   }
   }
 }
 
