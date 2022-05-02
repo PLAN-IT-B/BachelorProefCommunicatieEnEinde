@@ -97,6 +97,17 @@ void setup_keypad(){
   lcd.print("____");
 }
 
+void setup_lcd(){
+  //default lcd display setup
+  lcd.init();
+  lcd.clear();         
+  lcd.backlight(); 
+  lcd.setCursor(4,0);
+  lcd.print("Los een");
+  lcd.setCursor(2,1);
+  lcd.print("andere puzzel op.");
+}
+
 void reconnect()
 {
   // Loop until we're reconnected
@@ -140,6 +151,8 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println();
   }
 
+
+  //Als het een bericht is van de garbadge puzzel, zal het zijn voor de code te veranderen.
   if (strcmp(topic,"garbage/eindcode") == 0) 
   {
     for (int i = 0; i < 4; i++)
@@ -154,6 +167,13 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println(); 
     setup_keypad();
   }
+
+  //Als het een bericht is om de escape room klaar te maken voor gebruik, gaan we resetten.
+   if (strcmp(topic,"controlpanel/reset") == 0) 
+  {
+    ESP.restart();
+  }
+
 }
 
 
@@ -190,6 +210,11 @@ void setup() {
   client.setServer(MQTT_SERVER, MQTT_PORT);
   client.setCallback(callback);
 
+  //lcd setup
+  setup_lcd();
+
+  //Als alle belangrijke setups gelukt zijn, gaan we dat zeggen tegen de centrale esp.
+  client.publish("controlpanel/status", "UV-slot Ready");
 }
 
 void UV_Enable(){
@@ -201,17 +226,13 @@ void UV_Enable(){
   lcd.setCursor(3,1);
   lcd.print("Fiets maar");
 
-
   opgelost = false;
   for (int i = 0; i < 4; i++)
   {
     cinput[i]=0;
   }
-
-
-  //Zeggen tegen de controle esp dat het UV-slot Ready is!
-  client.publish("controlpanel/status","UV-slot Ready");
-
+  //Zeggen tegen de controle esp dat het UV-slot is opgelost!
+  client.publish("controlpanel/UV-slot","UV licht staat geschakeld!");
 }
 
 void loop() {
