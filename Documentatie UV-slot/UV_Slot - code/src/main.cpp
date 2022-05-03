@@ -25,6 +25,7 @@ void callback(char *topic, byte *message, unsigned int length);
 bool garbage_Ready = false;
 bool opgelost = false;
 bool blockKeypad = false;
+bool reset = false;
 
 //code slot
 int cinput[4];
@@ -104,7 +105,7 @@ void setup_lcd(){
   lcd.backlight(); 
   lcd.setCursor(4,0);
   lcd.print("Los een");
-  lcd.setCursor(2,1);
+  lcd.setCursor(0,1);
   lcd.print("andere puzzel op.");
 }
 
@@ -135,6 +136,24 @@ void reconnect()
       delay(2000);
     }
   }
+}
+
+void UV_Enable(){
+  //Opent de deur van de escape room
+  digitalWrite(Relais_UV, HIGH);
+  lcd.clear();
+  lcd.setCursor(4,0);
+  lcd.print("Correct!");
+  lcd.setCursor(3,1);
+  lcd.print("Fiets maar");
+
+  opgelost = false;
+  for (int i = 0; i < 4; i++)
+  {
+    cinput[i]=0;
+  }
+  //Zeggen tegen de controle esp dat het UV-slot is opgelost!
+  client.publish("controlpanel/UV-slot","UV licht staat geschakeld!");
 }
 
 void callback(char *topic, byte *message, unsigned int length)
@@ -174,9 +193,9 @@ void callback(char *topic, byte *message, unsigned int length)
     ESP.restart();
   }
 
+
+
 }
-
-
 
 void setup() {
 
@@ -213,26 +232,7 @@ void setup() {
   //lcd setup
   setup_lcd();
 
-  //Als alle belangrijke setups gelukt zijn, gaan we dat zeggen tegen de centrale esp.
-  client.publish("controlpanel/status", "UV-slot Ready");
-}
-
-void UV_Enable(){
-  //Opent de deur van de escape room
-  digitalWrite(Relais_UV, HIGH);
-  lcd.clear();
-  lcd.setCursor(4,0);
-  lcd.print("Correct!");
-  lcd.setCursor(3,1);
-  lcd.print("Fiets maar");
-
-  opgelost = false;
-  for (int i = 0; i < 4; i++)
-  {
-    cinput[i]=0;
-  }
-  //Zeggen tegen de controle esp dat het UV-slot is opgelost!
-  client.publish("controlpanel/UV-slot","UV licht staat geschakeld!");
+  reset = true;
 }
 
 void loop() {
@@ -249,13 +249,19 @@ void loop() {
     lastMsg = now;
   }
 
+  if(reset){
+  //Als alle belangrijke setups gelukt zijn, gaan we dat zeggen tegen de centrale esp.
+  client.publish("controlpanel/status", "UV-slot Ready");
+  reset = false;
+  }
+
   if(garbage_Ready==true){
    char key = customKeypad.getKey();
   
     if(opgelost == true){ //Als de code klopt 
       //gaat de deur open
       UV_Enable();   
-     blockKeypad = true;
+      blockKeypad = true;
 
     }
     else{

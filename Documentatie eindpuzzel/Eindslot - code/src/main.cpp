@@ -20,25 +20,28 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-int ledflag =0;
 
 void callback(char *topic, byte *message, unsigned int length);
 
 
 bool opgelost = false;
+bool AllReady = false;
+bool ReadyArray[5];
+bool reset= false;
+bool keypadBlocked = false;
 
 //Start reset knoppen
-const int startpin = 14;
-const int resetpin = 13;
-const int resetled = 23;
-bool resetled_ON = false;
+const int Spin = 14;
+const int Rpin = 13;
+const int Sled = 27;
+const int Rled = 23;
 
 int startbutton_status = 0;
 int resetbutton_status = 0;
 
 //code slot
 int cinput[6];
-int code[] = {1,1,1,1};
+int code[] = {1,2,3,4};
 
 //
 bool enterRoom = false;
@@ -79,8 +82,8 @@ int t2 = 0;
 int adc_read_counter = 0;
 hw_timer_t * timer = NULL; 
 
-// Global Variables
-long int count_time = 3600000;       // 1000ms in 1sec, 60secs in 1min, 60mins in 1hr. So, 1000x60x60 = 3600000ms = 1hr
+//timer variables
+long int count_time = 3600000;      // 1000ms in 1sec, 60secs in 1min, 60mins in 1hr. So, 1000x60x60 = 3600000ms = 1hr
 unsigned long NewTime = 0;
 unsigned long current_time = 0;
 unsigned long previous_time = 0;
@@ -90,9 +93,8 @@ int seconds, minutes;             // For switching between left & right part of 
 
 //interupt handlers
   //for timer
-  void IRAM_ATTR onTimer() {
+void IRAM_ATTR onTimer() {
   NewTime = count_time - 1;                       // Calculate the time remaining 
-    
   seconds = (NewTime % 60);                       // To display the countdown in mm:ss format
   minutes = ((NewTime / 60) % 60 );               //separate CountTime in two parts
   
@@ -102,46 +104,25 @@ int seconds, minutes;             // For switching between left & right part of 
   count_time = NewTime;                  // Update the time remaining
 }
   //for restart button
-  void IRAM_ATTR ISR_restart() {
-    if(digitalRead(resetpin) ==HIGH){
-      if(ledflag ==0){
-        ledflag=1;
-        digitalWrite(resetled,HIGH);      }
-      else {
-        ledflag=0;
-        digitalWrite(resetled,LOW);
-      }
-    }
-
-    /*if (resetled_ON==true)
-    {
-      digitalWrite(resetled, LOW);
-      resetled_ON = false;
-    }else if(resetled_ON==false)
-    {
-      digitalWrite(resetled, HIGH);
-      resetled_ON = true;
-    }*/
-    
-  }
+void IRAM_ATTR ISR_restart() {
+  reset= true;
+}
 
 
   //for start button
-  void enter_room(){
-    digitalWrite(Relais_Sol, HIGH);
-    delay(30000);
-    timerAlarmEnable(timer); 
-    digitalWrite(Relais_Sol, LOW);
+void enter_room(){
+  digitalWrite(Relais_Sol, HIGH);
+  delay(5000);
+  timerAlarmEnable(timer); 
+  digitalWrite(Relais_Sol, LOW);
+}
+void IRAM_ATTR ISR_start() {
+  if(AllReady== true){
+  enterRoom=true;
   }
-  void IRAM_ATTR ISR_start() {
-   enterRoom=true;
-  }
+}
 
-
-
-
-void setup_wifi()
-{
+void setup_wifi(){
   delay(10);
   Serial.println("Connecting to WiFi..");
 
@@ -159,8 +140,7 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
-void reconnect()
-{
+void reconnect(){
   // Loop until we're reconnected
   while (!client.connected())
   {
@@ -175,6 +155,7 @@ void reconnect()
       // Vul hieronder in naar welke directories je gaat luisteren.
       //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
       client.subscribe("controlpanel/status");
+      client.subscribe("controlpanel/reset");
     }
     else
     {
@@ -185,6 +166,23 @@ void reconnect()
       delay(2000);
     }
   }
+}
+
+void check_message(String message){
+  if(message== "UV-slot Ready"){
+    ReadyArray[4] = true;
+
+      AllReady = true;
+      digitalWrite(Sled, HIGH);
+  }
+  /*
+  for (int i = 0; i < sizeof(ReadyArray) ; i++)
+  {
+    AllReady = true;
+    digitalWrite(Sled, HIGH);    
+  }
+  */
+  
 }
 
 void callback(char *topic, byte *message, unsigned int length)
@@ -200,13 +198,20 @@ void callback(char *topic, byte *message, unsigned int length)
     messageTemp += (char)message[i];
   }
   Serial.println();
+
+  if (strcmp(topic,"controlpanel/status") == 0) 
+  {
+   check_message(messageTemp);
+  }
 }
 
 void setup() {
-  pinMode(Relais_Sol,OUTPUT); 
-  pinMode(resetled,OUTPUT);
-  pinMode(startpin, INPUT);
-  pinMode(resetpin, INPUT);
+  pinMode(Relais_Sol,OUTPUT);
+  pinMode(Sled,OUTPUT); 
+  pinMode(Rled,OUTPUT);
+  digitalWrite(Rled, HIGH);
+  pinMode(Spin, INPUT);
+  pinMode(Rpin, INPUT);
   Serial.begin (115200);
   digitalWrite(Relais_Sol, LOW);
   Serial.print("begin search");
@@ -241,8 +246,8 @@ void setup() {
   timerAttachInterrupt(timer, &onTimer, true);   //Attach the interrupt to Timer1
   timerAlarmWrite(timer, 1000000, true);      //Initialize the timer. The 1000000 in this line means the alarm should go off every 1000000 cycles of the clock. 1000000/1000000 = 1s
   
-  attachInterrupt(resetpin, ISR_restart, FALLING);
-  attachInterrupt(startpin, ISR_start, FALLING);
+  attachInterrupt(Rpin, ISR_restart, FALLING);
+  attachInterrupt(Spin, ISR_start, FALLING);
 
   //default timer display setup
   display.setBrightness(7);
@@ -266,14 +271,15 @@ void openDeur(){
     for (size_t i = 0; i < 50; i++)
     {
       lcd.clear();
-      delay(100);
+      delay(200);
       lcd.setCursor(4,1);
       lcd.print("Code correct!");
       lcd.setCursor(2,2);
       lcd.print("De deur is open!");
-      delay(200);
+      delay(300);
     }
     opgelost = false;
+    keypadBlocked = true;
     for (int i = 0; i < 4; i++)
     {
       cinput[i]=0;
@@ -281,7 +287,7 @@ void openDeur(){
   digitalWrite(Relais_Sol, LOW);
 }
 
-void loop() {
+void loop(){
   //Connectie checken en tesnoods reconnecten
   if (!client.connected())
   {
@@ -307,21 +313,30 @@ void loop() {
     lastMsg = now;
   }
 
+  if(reset){
+    client.publish("controlpanel/reset","Reset escaperoom");
+    Serial.println("Het reset signaal is gestuurd naar alle puzzeles.");
+    for (int i = 0; i < 30; i++){
+      delay(100);
+      digitalWrite(Rled, LOW);
+      delay(100);
+      digitalWrite(Rled, HIGH);
+    }
+    reset = false;
+  }
+
   //Lezen wat de status is van de knoppen
-  startbutton_status = digitalRead(startpin);
-  resetbutton_status = digitalRead(resetpin);
+  startbutton_status = digitalRead(Spin);
+  resetbutton_status = digitalRead(Rpin);
 
   char key = customKeypad.getKey();
   
-  if(opgelost == true){ //Als de code klopt 
+  if(opgelost){ //Als de code klopt 
     //gaat de deur open
     openDeur();    
   }
-  else{
-
-    //Als de knop wordt ingedrukt
-    if(key){
-
+  //Als de knop wordt ingedrukt en de keypad niet geblokt moet worden
+  else if(key && !keypadBlocked ){
       /*
       Serial.print("De waarde uit het keypad is: ");
       Serial.println(key);
@@ -363,10 +378,7 @@ void loop() {
         lcd.display();
         }    
       }
-    key == NULL; //Reset het key signaal
-    }
     
   }
-
 }
 
