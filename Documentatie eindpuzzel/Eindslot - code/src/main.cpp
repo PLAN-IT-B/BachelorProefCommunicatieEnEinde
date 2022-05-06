@@ -112,7 +112,12 @@ void IRAM_ATTR ISR_restart() {
   //for start button
 void enter_room(){
   digitalWrite(Relais_Sol, HIGH);
-  delay(5000);
+  for(int i = 0; i < 5; i++){
+    digitalWrite(Sled, LOW);
+    delay(100);
+    digitalWrite(Sled, HIGH);
+    delay(100);
+  }
   timerAlarmEnable(timer); 
   digitalWrite(Relais_Sol, LOW);
 }
