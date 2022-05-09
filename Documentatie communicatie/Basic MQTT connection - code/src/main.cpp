@@ -113,7 +113,7 @@ void loop()
   //client.publish("controlpanel/reset","Reset escaperoom"); delay(10000000000);
   
   //Of
-  client.publish("garbage/eindcode", "1234"); delay(10000000000);
+  client.publish("garbage/eindcode", "5555"); delay(10000000000);
   
  
   

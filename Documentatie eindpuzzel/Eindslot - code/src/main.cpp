@@ -247,9 +247,9 @@ void setup() {
   client.setCallback(callback);
 
   //timer interrupt setup
-  timer = timerBegin(0, 80, true);                //Begin timer with 1 MHz frequency (80MHz/80)
+  timer = timerBegin(0, 80, true);               //Begin timer with 1 MHz frequency (80MHz/80)
   timerAttachInterrupt(timer, &onTimer, true);   //Attach the interrupt to Timer1
-  timerAlarmWrite(timer, 1000000, true);      //Initialize the timer. The 1000000 in this line means the alarm should go off every 1000000 cycles of the clock. 1000000/1000000 = 1s
+  timerAlarmWrite(timer, 1000000, true);         //Initialize the timer. The 1000000 in this line means the alarm should go off every 1000000 cycles of the clock. 1000000/1000000 = 1s
   
   attachInterrupt(Rpin, ISR_restart, FALLING);
   attachInterrupt(Spin, ISR_start, FALLING);

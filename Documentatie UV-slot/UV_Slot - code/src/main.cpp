@@ -29,7 +29,7 @@ bool reset = false;
 
 //code slot
 int cinput[4];
-int code[] = {1,2,3,4};
+int code[] = {-1,-1,-1,-1};
 
 
 //keypad configuratie
@@ -85,9 +85,9 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
-void setup_keypad(){
-  garbage_Ready = true;
-  
+
+
+void setup_lcd(){
   //default lcd display setup
   lcd.init();
   lcd.clear();         
@@ -98,16 +98,20 @@ void setup_keypad(){
   lcd.print("____");
 }
 
-void setup_lcd(){
-  //default lcd display setup
+void tip(){
   lcd.init();
   lcd.clear();         
   lcd.backlight(); 
-  lcd.setCursor(4,0);
-  lcd.print("Los een");
-  lcd.setCursor(0,1);
-  lcd.print("andere puzzel op.");
+  lcd.setCursor(0,0);
+  lcd.print("Tip: Doe een");
+  lcd.setCursor(3,1);
+  lcd.print("andere puzzel");
+
+  //oorspronkelijke scherm terugzetten
+  delay(5000);
+  setup_lcd();
 }
+
 
 void reconnect()
 {
@@ -154,6 +158,14 @@ void UV_Enable(){
   }
   //Zeggen tegen de controle esp dat het UV-slot is opgelost!
   client.publish("controlpanel/UV-slot","UV licht staat geschakeld!");
+
+  delay(300000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Gebruik het");
+  lcd.setCursor(3,1);
+  lcd.print("UV-licht");
+
 }
 
 void callback(char *topic, byte *message, unsigned int length)
@@ -184,7 +196,7 @@ void callback(char *topic, byte *message, unsigned int length)
         Serial.print(code[i]);
       }
     Serial.println(); 
-    setup_keypad();
+    garbage_Ready = true;
   }
 
   //Als het een bericht is om de escape room klaar te maken voor gebruik, gaan we resetten.
@@ -255,7 +267,7 @@ void loop() {
   reset = false;
   }
 
-  if(garbage_Ready==true){
+  
    char key = customKeypad.getKey();
   
     if(opgelost == true){ //Als de code klopt 
@@ -286,6 +298,10 @@ void loop() {
                 c = 6;
               }
             }
+            if (garbage_Ready==false) {
+              tip();
+            }
+            
           }
         }     
 
@@ -300,8 +316,8 @@ void loop() {
           
         }
         else{ //Als er iets anders (cijfer) wordt ingedrukt
-         if(c<10){ //Vul het getal in en schuif 1 plaats op.
-         lcd.setCursor(c,1);
+          if(c<10){ //Vul het getal in en schuif 1 plaats op.
+          lcd.setCursor(c,1);
           lcd.print(key);
           cinput[c-6]= key-'0';
           lcd.setCursor(c,1);
@@ -311,6 +327,6 @@ void loop() {
         }
       }
    }
-  }
+  
 }
 
