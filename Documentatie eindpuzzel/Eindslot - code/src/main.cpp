@@ -174,19 +174,36 @@ void reconnect(){
 }
 
 void check_message(String message){
+  AllReady = true;
+  /*
+  if(message== "Trappenmaar Ready"){
+    ReadyArray[0] = true;
+  }
+  if(message== "Traingame Ready"){
+    ReadyArray[1] = true;
+  }
+  if(message== "Wristbands Ready"){
+    ReadyArray[2] = true;
+  }
+  if(message== "Garbage Ready"){
+    ReadyArray[3] = true;
+  }
   if(message== "UV-slot Ready"){
     ReadyArray[4] = true;
-
-      AllReady = true;
-      digitalWrite(Sled, HIGH);
   }
-  /*
   for (int i = 0; i < sizeof(ReadyArray) ; i++)
   {
-    AllReady = true;
-    digitalWrite(Sled, HIGH);    
+    if(!ReadyArray[i]){ 
+    AllReady = false;
+    }
   }
   */
+  if (AllReady)
+  {
+    digitalWrite(Sled, HIGH); 
+  }
+  
+  
   
 }
 

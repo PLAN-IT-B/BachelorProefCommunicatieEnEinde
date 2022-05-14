@@ -78,14 +78,15 @@ void reconnect()
     // Attempt to connect
     // CREATE UNIQUE client ID!
     // in Mosquitto broker enable anom. access
-    if (client.connect("ESP8266Client"))
+    if (client.connect("Luisteraar"))
     {
       Serial.println("connected");
       // Subscribe
       // Vul hieronder in naar welke directories je gaat luisteren.
       //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
       client.subscribe("controlpanel/reset");
-    }
+      client.subscribe("controlpanel/status");
+      client.subscribe("trappenmaar/buffer");    }
     else
     {
       Serial.print("failed, rc=");
