@@ -159,13 +159,6 @@ void UV_Enable(){
   //Zeggen tegen de controle esp dat het UV-slot is opgelost!
   client.publish("controlpanel/UV-slot","UV licht staat geschakeld!");
 
-  delay(300000);
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("Gebruik het");
-  lcd.setCursor(3,1);
-  lcd.print("UV-licht");
-
 }
 
 void callback(char *topic, byte *message, unsigned int length)

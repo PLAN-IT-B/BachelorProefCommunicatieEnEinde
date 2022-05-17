@@ -22,6 +22,7 @@ int value = 0;
 
 
 void callback(char *topic, byte *message, unsigned int length);
+void openDeur();
 
 
 bool opgelost = false;
@@ -41,7 +42,7 @@ int resetbutton_status = 0;
 
 //code slot
 int cinput[6];
-int code[] = {1,2,3,4};
+int code[] = {2,6,0,3}; //de datum van overshoot day
 
 //
 bool enterRoom = false;
@@ -70,6 +71,7 @@ int c =8; //pointer x-as
 
 //Relais 
 const int Relais_Sol = 32;
+const int SoundSys = 19;
 
 // Clock display pins (digital pins)
 #define CLK 26
@@ -127,6 +129,12 @@ void IRAM_ATTR ISR_start() {
   }
 }
 
+void play_sound(int t){
+  digitalWrite(SoundSys, HIGH);
+  delay(t);
+  digitalWrite(SoundSys, LOW);
+}
+
 void setup_wifi(){
   delay(10);
   Serial.println("Connecting to WiFi..");
@@ -161,6 +169,7 @@ void reconnect(){
       //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
       client.subscribe("controlpanel/status");
       client.subscribe("controlpanel/reset");
+      client.subscribe("eindpuzzel/timer");
     }
     else
     {
@@ -174,8 +183,7 @@ void reconnect(){
 }
 
 void check_message(String message){
-  AllReady = true;
-  /*
+  
   if(message== "Trappenmaar Ready"){
     ReadyArray[0] = true;
   }
@@ -191,44 +199,28 @@ void check_message(String message){
   if(message== "UV-slot Ready"){
     ReadyArray[4] = true;
   }
+
+  //Kijken of alles ready is
+  AllReady = true;
   for (int i = 0; i < sizeof(ReadyArray) ; i++)
   {
     if(!ReadyArray[i]){ 
     AllReady = false;
     }
   }
-  */
+  
   if (AllReady)
   {
     digitalWrite(Sled, HIGH); 
   }
-  
-  
-  
+
 }
 
-void callback(char *topic, byte *message, unsigned int length)
-{
-  Serial.print("Message arrived on topic: ");
-  Serial.print(topic);
-  Serial.print(". Message: ");
-  String messageTemp;
 
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)message[i]);
-    messageTemp += (char)message[i];
-  }
-  Serial.println();
-
-  if (strcmp(topic,"controlpanel/status") == 0) 
-  {
-   check_message(messageTemp);
-  }
-}
 
 void setup() {
   pinMode(Relais_Sol,OUTPUT);
+  pinMode(SoundSys,OUTPUT);
   pinMode(Sled,OUTPUT); 
   pinMode(Rled,OUTPUT);
   digitalWrite(Rled, HIGH);
@@ -286,28 +278,7 @@ void setup() {
   lcd.print("____");
 }
 
-void openDeur(){
-  //Opent de deur van de escape room
-  digitalWrite(Relais_Sol, HIGH);
-    timerAlarmDisable(timer);
-    for (size_t i = 0; i < 50; i++)
-    {
-      lcd.clear();
-      delay(200);
-      lcd.setCursor(4,1);
-      lcd.print("Code correct!");
-      lcd.setCursor(2,2);
-      lcd.print("De deur is open!");
-      delay(300);
-    }
-    opgelost = false;
-    keypadBlocked = true;
-    for (int i = 0; i < 4; i++)
-    {
-      cinput[i]=0;
-    }
-  digitalWrite(Relais_Sol, LOW);
-}
+
 
 void loop(){
   //Connectie checken en tesnoods reconnecten
@@ -326,8 +297,6 @@ void loop(){
     digitalWrite(Relais_Sol, LOW);
     enterRoom = false;
   }
-
-  
 
   long now = millis();
   if (now - lastMsg > 5000)
@@ -376,6 +345,7 @@ void loop(){
             c = 8;
           }
         }
+        if(!AllReady){opgelost=false;}
         }
       }     
 
@@ -404,3 +374,51 @@ void loop(){
   }
 }
 
+void callback(char *topic, byte *message, unsigned int length)
+{
+  Serial.print("Message arrived on topic: ");
+  Serial.print(topic);
+  Serial.print(". Message: ");
+  String messageTemp;
+
+  for (int i = 0; i < length; i++)
+  {
+    Serial.print((char)message[i]);
+    messageTemp += (char)message[i];
+  }
+  Serial.println();
+
+  if (strcmp(topic,"controlpanel/status") == 0) 
+  {
+   check_message(messageTemp);
+  }
+
+  if (strcmp(topic,"eindpuzzel/timer") == 0) 
+  {
+   play_sound(30000);
+  }
+}
+
+
+void openDeur(){
+  //Opent de deur van de escape room
+  digitalWrite(Relais_Sol, HIGH);
+    timerAlarmDisable(timer);
+    for (size_t i = 0; i < 50; i++)
+    {
+      lcd.clear();
+      delay(200);
+      lcd.setCursor(4,1);
+      lcd.print("Code correct!");
+      lcd.setCursor(2,2);
+      lcd.print("De deur is open!");
+      delay(300);
+    }
+    opgelost = false;
+    keypadBlocked = true;
+    for (int i = 0; i < 4; i++)
+    {
+      cinput[i]=0;
+    }
+  digitalWrite(Relais_Sol, LOW);
+}
