@@ -20,14 +20,21 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-
+void reconnect();
 void callback(char *topic, byte *message, unsigned int length);
 void openDeur();
+void IRAM_ATTR ISR_restart();
+void IRAM_ATTR ISR_start();
+void setup_wifi();
+void enter_room();
+void check_message(String message);
+void IRAM_ATTR onTimer();
 
 
 bool opgelost = false;
 bool AllReady = false;
 bool ReadyArray[5];
+int Wristbands = 0;
 bool reset= false;
 bool keypadBlocked = false;
 
@@ -92,132 +99,6 @@ unsigned long previous_time = 0;
 volatile short int start_pause = 0;
 int seconds, minutes;             // For switching between left & right part of the display(Even = left, Odd = right)
 
-
-//interupt handlers
-  //for timer
-void IRAM_ATTR onTimer() {
-  NewTime = count_time - 1;                       // Calculate the time remaining 
-  seconds = (NewTime % 60);                       // To display the countdown in mm:ss format
-  minutes = ((NewTime / 60) % 60 );               //separate CountTime in two parts
-  
-  display.showNumberDecEx(seconds, 0, true, 2, 2); // Display the seconds in the last two places
-  display.showNumberDecEx(minutes, 0b11100000, true, 2, 0); // Display the minutes in the first two places, with colon
-
-  count_time = NewTime;                  // Update the time remaining
-}
-  //for restart button
-void IRAM_ATTR ISR_restart() {
-  reset= true;
-}
-
-
-  //for start button
-void enter_room(){
-  digitalWrite(Relais_Sol, HIGH);
-  for(int i = 0; i < 5; i++){
-    digitalWrite(Sled, LOW);
-    delay(100);
-    digitalWrite(Sled, HIGH);
-    delay(100);
-  }
-  timerAlarmEnable(timer); 
-  digitalWrite(Relais_Sol, LOW);
-}
-void IRAM_ATTR ISR_start() {
-  if(AllReady== true){
-  enterRoom=true;
-  }
-}
-
-void play_sound(int t){
-  digitalWrite(SoundSys, HIGH);
-  delay(t);
-  digitalWrite(SoundSys, LOW);
-}
-
-void setup_wifi(){
-  delay(10);
-  Serial.println("Connecting to WiFi..");
-
-  WiFi.begin(SSID, PWD);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-}
-
-void reconnect(){
-  // Loop until we're reconnected
-  while (!client.connected())
-  {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    // CREATE UNIQUE client ID!
-    // in Mosquitto broker enable anom. access
-    if (client.connect("Eindpuzzel_ESP"))
-    {
-      Serial.println("connected");
-      // Subscribe
-      // Vul hieronder in naar welke directories je gaat luisteren.
-      //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
-      client.subscribe("controlpanel/status");
-      client.subscribe("controlpanel/reset");
-      client.subscribe("eindpuzzel/timer");
-    }
-    else
-    {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 2 seconds");
-      // Wait 5 seconds before retrying
-      delay(2000);
-    }
-  }
-}
-
-void check_message(String message){
-  
-  if(message== "Trappenmaar Ready"){
-    ReadyArray[0] = true;
-  }
-  if(message== "Traingame Ready"){
-    ReadyArray[1] = true;
-  }
-  if(message== "Wristbands Ready"){
-    ReadyArray[2] = true;
-  }
-  if(message== "Garbage Ready"){
-    ReadyArray[3] = true;
-  }
-  if(message== "UV-slot Ready"){
-    ReadyArray[4] = true;
-  }
-
-  //Kijken of alles ready is
-  AllReady = true;
-  for (int i = 0; i < sizeof(ReadyArray) ; i++)
-  {
-    if(!ReadyArray[i]){ 
-    AllReady = false;
-    }
-  }
-  
-  if (AllReady)
-  {
-    digitalWrite(Sled, HIGH); 
-  }
-
-}
-
-
-
 void setup() {
   pinMode(Relais_Sol,OUTPUT);
   pinMode(SoundSys,OUTPUT);
@@ -277,8 +158,6 @@ void setup() {
   lcd.setCursor(8,2);
   lcd.print("____");
 }
-
-
 
 void loop(){
   //Connectie checken en tesnoods reconnecten
@@ -392,13 +271,7 @@ void callback(char *topic, byte *message, unsigned int length)
   {
    check_message(messageTemp);
   }
-
-  if (strcmp(topic,"eindpuzzel/timer") == 0) 
-  {
-   play_sound(30000);
-  }
 }
-
 
 void openDeur(){
   //Opent de deur van de escape room
@@ -421,4 +294,127 @@ void openDeur(){
       cinput[i]=0;
     }
   digitalWrite(Relais_Sol, LOW);
+}
+
+void IRAM_ATTR onTimer() {
+  NewTime = count_time - 1;                       // Calculate the time remaining 
+  seconds = (NewTime % 60);                       // To display the countdown in mm:ss format
+  minutes = ((NewTime / 60) % 60 );               //separate CountTime in two parts
+  
+  display.showNumberDecEx(seconds, 0, true, 2, 2); // Display the seconds in the last two places
+  display.showNumberDecEx(minutes, 0b11100000, true, 2, 0); // Display the minutes in the first two places, with colon
+
+  count_time = NewTime;                  // Update the time remaining
+}
+
+void IRAM_ATTR ISR_restart() {
+  Wristbands = 0;
+  for (int i = 0; i < sizeof(ReadyArray); i++)
+  {
+    ReadyArray[i] = false;
+  }
+  reset= true;  
+  digitalWrite(Sled, LOW);
+}
+
+void enter_room(){
+  digitalWrite(Relais_Sol, HIGH);
+  for(int i = 0; i < 5; i++){
+    digitalWrite(Sled, LOW);
+    delay(100);
+    digitalWrite(Sled, HIGH);
+    delay(100);
+  }
+  timerAlarmEnable(timer); 
+  digitalWrite(Relais_Sol, LOW);
+}
+
+void IRAM_ATTR ISR_start() {
+  if(AllReady== true){
+  enterRoom=true;
+  }
+}
+
+void setup_wifi(){
+  delay(10);
+  Serial.println("Connecting to WiFi..");
+
+  WiFi.begin(SSID, PWD);
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void reconnect(){
+  // Loop until we're reconnected
+  while (!client.connected())
+  {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    // CREATE UNIQUE client ID!
+    // in Mosquitto broker enable anom. access
+    if (client.connect("Eindpuzzel_ESP"))
+    {
+      Serial.println("connected");
+      // Subscribe
+      // Vul hieronder in naar welke directories je gaat luisteren.
+      //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
+      client.subscribe("controlpanel/status");
+      client.subscribe("controlpanel/reset");
+      client.subscribe("eindpuzzel/timer");
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 2 seconds");
+      // Wait 5 seconds before retrying
+      delay(2000);
+    }
+  }
+}
+
+void check_message(String message){
+  
+  if(message== "Trappenmaar Ready"){
+    ReadyArray[0] = true;
+  }
+  if(message== "Traingame Ready"){
+    ReadyArray[1] = true;
+  }
+  if(message== "Wristbands Ready"){
+    Wristbands=Wristbands+1;
+    if(Wristbands == 4){
+    ReadyArray[2] = true;
+    }
+  }
+  if(message== "Garbage Ready"){
+    ReadyArray[3] = true;
+  }
+  if(message== "UV-slot Ready"){
+    ReadyArray[4] = true;
+  }
+
+  //Kijken of alles ready is
+  AllReady = true;
+  for (int i = 0; i < sizeof(ReadyArray) ; i++)
+  {
+    if(!ReadyArray[i]){ 
+    AllReady = false;
+    }
+  }
+  
+  if (AllReady)
+  {
+    digitalWrite(Sled, HIGH); 
+  }
+
 }
