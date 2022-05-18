@@ -20,23 +20,29 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-void reconnect();
+
+
+
 void callback(char *topic, byte *message, unsigned int length);
-void openDeur();
 void IRAM_ATTR ISR_restart();
 void IRAM_ATTR ISR_start();
+void IRAM_ATTR onTimer();
 void setup_wifi();
+void reconnect();
+void setup_lcd();
 void enter_room();
 void check_message(String message);
-void IRAM_ATTR onTimer();
+void openSlot();
+void tip();
 
 
-bool opgelost = false;
+bool codeJuist = false;
 bool AllReady = false;
 bool ReadyArray[5];
 int Wristbands = 0;
 bool reset= false;
 bool keypadBlocked = false;
+bool energie;
 
 //Start reset knoppen
 const int Spin = 14;
@@ -167,13 +173,9 @@ void loop(){
   }
   client.loop();
 
-
   if (enterRoom)
   {
-    digitalWrite(Relais_Sol, HIGH);
-    delay(30000);
-    timerAlarmEnable(timer); 
-    digitalWrite(Relais_Sol, LOW);
+    enter_room();
     enterRoom = false;
   }
 
@@ -201,9 +203,11 @@ void loop(){
 
   char key = customKeypad.getKey();
   
-  if(opgelost){ //Als de code klopt 
-    //gaat de deur open
-    openDeur();    
+  if(codeJuist){ //Als de code klopt 
+    openSlot();    
+  }
+  if(!energie){
+    tip();
   }
   //Als de knop wordt ingedrukt en de keypad niet geblokt moet worden
   else if(key && !keypadBlocked ){
@@ -215,16 +219,19 @@ void loop(){
       //Als # (enter wordt ingedrukt)
       if(key =='#'){    
         if(c ==12){ //De positie is het laatste cijfer
-        opgelost = true; //Controleer of de code klopt
-        for(int i = 0;i<4;i++){
-          if(code[i]!=cinput[i]){
-            opgelost = false;
-            lcd.setCursor(8,2);
-            lcd.print("____");
-            c = 8;
-          }
-        }
-        if(!AllReady){opgelost=false;}
+          codeJuist = true; //Controleer of de code klopt
+          for(int i = 0;i<4;i++){
+           if(code[i]!=cinput[i] || !AllReady){
+             codeJuist = false;
+             lcd.setCursor(8,2);
+             lcd.print("____");
+             c = 8;
+           }
+         }
+         if(!codeJuist){
+           for (int i = 0; i < 2; i++)
+           {client.publish("TrappenMaar/buffer","grote fout");}
+         }
         }
       }     
 
@@ -238,7 +245,6 @@ void loop(){
         }
           
       }
-  
       else{ //Als er iets anders (cijfer) wordt ingedrukt
         if(c<12){ //Vul het getal in en schuif 1 plaats op.
         lcd.setCursor(c,2);
@@ -249,7 +255,6 @@ void loop(){
         lcd.display();
         }    
       }
-    
   }
 }
 
@@ -271,30 +276,19 @@ void callback(char *topic, byte *message, unsigned int length)
   {
    check_message(messageTemp);
   }
-}
 
-void openDeur(){
-  //Opent de deur van de escape room
-  digitalWrite(Relais_Sol, HIGH);
-    timerAlarmDisable(timer);
-    for (size_t i = 0; i < 50; i++)
-    {
-      lcd.clear();
-      delay(200);
-      lcd.setCursor(4,1);
-      lcd.print("Code correct!");
-      lcd.setCursor(2,2);
-      lcd.print("De deur is open!");
-      delay(300);
+ //De status van de buffer
+  if (strcmp(topic,"TrappenMaar/zone") == 0) 
+  {
+    if(messageTemp == "vol"){
+      energie = true;
     }
-    opgelost = false;
-    keypadBlocked = true;
-    for (int i = 0; i < 4; i++)
-    {
-      cinput[i]=0;
+    else if(messageTemp == "niet vol"){
+      energie = false;
     }
-  digitalWrite(Relais_Sol, LOW);
-}
+  }
+}  
+
 
 void IRAM_ATTR onTimer() {
   NewTime = count_time - 1;                       // Calculate the time remaining 
@@ -315,18 +309,6 @@ void IRAM_ATTR ISR_restart() {
   }
   reset= true;  
   digitalWrite(Sled, LOW);
-}
-
-void enter_room(){
-  digitalWrite(Relais_Sol, HIGH);
-  for(int i = 0; i < 5; i++){
-    digitalWrite(Sled, LOW);
-    delay(100);
-    digitalWrite(Sled, HIGH);
-    delay(100);
-  }
-  timerAlarmEnable(timer); 
-  digitalWrite(Relais_Sol, LOW);
 }
 
 void IRAM_ATTR ISR_start() {
@@ -351,6 +333,30 @@ void setup_wifi(){
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+}
+
+void setup_lcd(){
+  //default lcd display setup
+  lcd.init();
+  lcd.clear();         
+  lcd.backlight(); 
+  lcd.setCursor(2,0);
+  lcd.print("Voer de code in:");
+  lcd.setCursor(8,2);
+  lcd.print("____");
+}
+
+void enter_room(){
+  digitalWrite(Relais_Sol, HIGH);
+  for(int i = 0; i < 30; i++){
+    digitalWrite(Sled, LOW);
+    delay(700);
+    digitalWrite(Sled, HIGH);
+    delay(300);
+  }
+  client.publish("Wristbands","Herstart Wristbands");
+  timerAlarmEnable(timer); 
+  digitalWrite(Relais_Sol, LOW);
 }
 
 void reconnect(){
@@ -417,4 +423,38 @@ void check_message(String message){
     digitalWrite(Sled, HIGH); 
   }
 
+}
+
+void openSlot(){
+  //Opent de deur van de escape room
+  digitalWrite(Relais_Sol, HIGH);
+    timerAlarmDisable(timer);
+    for (size_t i = 0; i < 50; i++)
+    {
+      lcd.clear();
+      delay(200);
+      lcd.setCursor(4,1);
+      lcd.print("Code correct!");
+      lcd.setCursor(2,2);
+      lcd.print("De deur is open!");
+      delay(300);
+    }
+    codeJuist = false;
+    keypadBlocked = true;
+    for (int i = 0; i < 4; i++)
+    {
+      cinput[i]=0;
+    }
+  digitalWrite(Relais_Sol, LOW);
+}
+
+void tip(){
+  lcd.clear();        
+  lcd.backlight(); 
+  lcd.setCursor(3,1);
+  lcd.print("Dit heeft meer");
+  lcd.setCursor(4,2);
+  lcd.print("energie nodig!");
+  delay(6000);
+  setup_lcd();
 }
