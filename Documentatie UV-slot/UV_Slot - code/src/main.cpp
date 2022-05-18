@@ -226,7 +226,7 @@ void callback(char *topic, byte *message, unsigned int length)
     garbage_Ready = true;
   }
 
-  //De statusvan de buffer
+  //De status van de buffer
   if (strcmp(topic,"TrappenMaar/zone") == 0) 
   {
     if(messageTemp == "Groen"){

@@ -277,7 +277,7 @@ void callback(char *topic, byte *message, unsigned int length)
    check_message(messageTemp);
   }
 
- //De status van de buffer
+ //De status van de buffer beinvloed of je de code kan ingeven of niet.
   if (strcmp(topic,"TrappenMaar/zone") == 0) 
   {
     if(messageTemp == "vol"){
@@ -288,7 +288,6 @@ void callback(char *topic, byte *message, unsigned int length)
     }
   }
 }  
-
 
 void IRAM_ATTR onTimer() {
   NewTime = count_time - 1;                       // Calculate the time remaining 
