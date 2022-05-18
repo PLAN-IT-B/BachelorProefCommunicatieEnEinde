@@ -169,9 +169,7 @@ void loop() {
             if(opgelost){
               UV_Enable();   
               blockKeypad = true;
-            }
-
-            
+            }            
           }
         }     
         else if(key == '*'){ //Als * (terug) wordt ingevuld
@@ -229,7 +227,7 @@ void callback(char *topic, byte *message, unsigned int length)
   }
 
   //De statusvan de buffer
-  if (strcmp(topic,"garbage/eindcode") == 0) 
+  if (strcmp(topic,"TrappenMaar/zone") == 0) 
   {
     if(messageTemp == "Groen"){
       Curr_energie = true;
