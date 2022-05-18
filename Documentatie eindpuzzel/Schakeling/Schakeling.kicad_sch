@@ -5,7 +5,7 @@
   (paper "A4")
 
   (title_block
-    (title "Eindpuzzel schakeling")
+    (title "Eindpuzzel pcb design")
     (date "2022-05-18")
     (rev "Jona Capelle")
     (company "KULeuven")
