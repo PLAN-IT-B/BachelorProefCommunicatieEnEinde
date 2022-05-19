@@ -392,7 +392,7 @@ void reconnect(){
     //Na de geforceerde reconnect worden er hier berichten gestuurd.
     if(notificatie_START){
       client.publish("Wristbands","Herstart Wristbands"); 
-      client.publish("Garbage","Buzz lawaai om te starten"); 
+      client.publish("garbage","Buzz lawaai om te starten"); 
       notificatie_START = false;
     }
     //Subscribions    
