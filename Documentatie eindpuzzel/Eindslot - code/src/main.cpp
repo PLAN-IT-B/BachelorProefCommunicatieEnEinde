@@ -42,7 +42,8 @@ bool ReadyArray[5];
 int Wristbands = 0;
 bool reset= false;
 bool keypadBlocked = false;
-bool energie;
+bool energie =false;
+bool notStart = false;
 
 //Start reset knoppen
 const int Spin = 14;
@@ -185,6 +186,8 @@ void loop(){
     lastMsg = now;
   }
 
+  
+
   if(reset){
     client.publish("controlpanel/reset","Reset escaperoom");
     Serial.println("Het reset signaal is gestuurd naar alle puzzeles.");
@@ -217,6 +220,11 @@ void loop(){
       if(key =='#'){    
         if(c ==12){ //De positie is het laatste cijfer
           codeJuist = true; //Controleer of de code klopt
+          for (int i = 0; i < 4; i++)
+          {
+            Serial.print(cinput[i]);
+          }
+          
           for(int i = 0;i<4;i++){
            if(code[i]!=cinput[i] || !AllReady){
              codeJuist = false;
@@ -226,8 +234,15 @@ void loop(){
            }
           }
           if(!codeJuist && energie){
-           for (int i = 0; i < 2; i++)
-           {client.publish("TrappenMaar/buffer","grote fout");}
+            lcd.clear();
+            lcd.setCursor(7,1);
+            lcd.print("Fout!");
+            lcd.setCursor(2,2);
+            lcd.print("De buffer zakt!");
+            delay(2000);
+            for (int i = 0; i < 6; i++){client.publish("TrappenMaar/buffer","grote fout");}
+            delay(4000);
+            setup_lcd();
           }
           if (!energie){
             tip();
@@ -267,7 +282,7 @@ void callback(char *topic, byte *message, unsigned int length)
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
-  String messageTemp;
+  String messageTemp = "";
 
   for (int i = 0; i < length; i++)
   {
@@ -284,10 +299,13 @@ void callback(char *topic, byte *message, unsigned int length)
  //De status van de buffer beinvloed of je de code kan ingeven of niet.
   if (strcmp(topic,"TrappenMaar/zone") == 0) 
   {
+    Serial.println("zone bericht");
     if(messageTemp == "vol"){
+      // Serial.println("vol");
       energie = true;
     }
     else if(messageTemp == "niet vol"){
+      // Serial.println("niet vol");
       energie = false;
     }
   }
@@ -357,7 +375,8 @@ void enter_room(){
     digitalWrite(Sled, HIGH);
     delay(300);
   }
-  client.publish("Wristbands","Herstart Wristbands");
+  delay(5000);
+  notStart=true;
   timerAlarmEnable(timer); 
   digitalWrite(Relais_Sol, LOW);
 }
@@ -373,12 +392,17 @@ void reconnect(){
     if (client.connect("Eindpuzzel_ESP"))
     {
       Serial.println("connected");
+
+    if(notStart){
+    client.publish("Wristbands","Herstart Wristbands"); 
+    notStart = false;
+  }
+
       // Subscribe
       // Vul hieronder in naar welke directories je gaat luisteren.
       //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
       client.subscribe("controlpanel/status");
-      client.subscribe("controlpanel/reset");
-      client.subscribe("eindpuzzel/timer");
+      client.subscribe("TrappenMaar/zone");
     }
     else
     {
@@ -454,7 +478,7 @@ void openSlot(){
 void tip(){
   lcd.clear();        
   lcd.backlight(); 
-  lcd.setCursor(2,1);
+  lcd.setCursor(1,1);
   lcd.print("Dit heeft meer");
   lcd.setCursor(5,2);
   lcd.print("energie nodig!");

@@ -53,7 +53,7 @@ Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS)
 
 //LCD
 LiquidCrystal_I2C lcd(0x27,20,4);
-int c =6; //pointer x-as
+int c =5; //pointer x-as
 
 //Relais 
 const int Relais_UV = 32;
@@ -154,14 +154,14 @@ void loop() {
 
         //Als # (enter wordt ingedrukt)
         if(key =='#'){    
-          if(c ==10 ){ //De positie is het laatste cijfer
+          if(c ==9 ){ //De positie is het laatste cijfer
             opgelost = true; //Controleer of de code klopt
             for(int i = 0;i<4;i++){
               if(code[i]!=cinput[i]){
                 opgelost = false;
-                lcd.setCursor(6,1);
-                lcd.print("____");
-                c = 6;
+                lcd.setCursor(5,1);
+                lcd.print("____kg");
+                c = 5;
               }
             }
             if (garbage_Ready==false) {
@@ -175,18 +175,18 @@ void loop() {
         }     
         else if(key == '*'){ //Als * (terug) wordt ingevuld
             //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
-          if(c>6){
+          if(c>5){
             c--;
             lcd.setCursor(c,1);
             lcd.print("_");
-            cinput[c-6] = 0;
+            cinput[c-5] = 0;
           }
         }
         else{ //Als er iets anders (cijfer) wordt ingedrukt
-          if(c<10){ //Vul het getal in en schuif 1 plaats op.
+          if(c<9){ //Vul het getal in en schuif 1 plaats op.
           lcd.setCursor(c,1);
           lcd.print(key);
-          cinput[c-6]= key-'0';
+          cinput[c-5]= key-'0';
           lcd.setCursor(c,1);
           c++;
           lcd.display();
@@ -273,8 +273,8 @@ void setup_lcd(){
   lcd.backlight(); 
   lcd.setCursor(0,0);
   lcd.print("Voer de code in:");
-  lcd.setCursor(6,1);
-  lcd.print("____");
+  lcd.setCursor(5,1);
+  lcd.print("____kg");
 }
 
 void tip(){
