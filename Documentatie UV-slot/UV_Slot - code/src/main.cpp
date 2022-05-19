@@ -20,8 +20,15 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
+//functies definiëren
 void callback(char *topic, byte *message, unsigned int length);
+void setup_wifi();
+void reconnect();
+void setup_lcd();
+void tip();
+void UV_Enable();
 
+//glabale booleans definiëren
 bool garbage_Ready = false;
 bool opgelost = false;
 bool blockKeypad = false;
@@ -35,19 +42,16 @@ int code[] = {-1,-1,-1,-1};
 //keypad configuratie
 const byte ROWS = 4; 
 const byte COLS = 3; 
-
 char hexaKeys[ROWS][COLS] = {
   {'1', '2', '3'},
   {'4', '5', '6'},
   {'7', '8', '9'},
   {'*', '0', '#'}
 };
-
 byte rowPins[ROWS] = {19, 5, 18, 17}; // <= De IO pinnen van de esp
                     //2, 7, 6, 4  <= de pinnen van de keypad
 byte colPins[COLS] = {4, 16, 2}; // <= De IO pinnen van de esp
                     //3, 1, 5 <= de pinnen van de keypad
-
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 //LCD
@@ -57,22 +61,13 @@ int c =5; //pointer x-as
 //Relaïs 
 const int Relais_UV = 32;
 
-//Globale variabelen
+//timer variabelen
 long int count_time = 3600000;       // 1000ms in 1sec, 60secs in 1min, 60mins in 1hr. So, 1000x60x60 = 3600000ms = 1hr
 unsigned long NewTime = 0;
 unsigned long current_time = 0;
 unsigned long previous_time = 0;
 volatile short int start_pause = 0;
 int seconds, minutes;             // For switching between left & right part of the display(Even = left, Odd = right)
-
-//functies definieren
-void setup_wifi();
-void setup_lcd();
-void tip();
-void reconnect();
-void UV_Enable();
-void callback(char *topic, byte *message, unsigned int length);
-
 
 
 void setup() {
@@ -181,7 +176,7 @@ void loop() {
         cinput[c-5] = 0;
       }
     }
-    else{ //Als er iets anders (cijfer) wordt ingedrukt
+    else{ //Als er iets anders (dus cijfer) wordt ingedrukt.
       if(c<9){ //Vul het getal in en schuif 1 plaats op.
         lcd.setCursor(c,1);
         lcd.print(key);
@@ -217,12 +212,9 @@ void callback(char *topic, byte *message, unsigned int length)
       code[i] = message[i]-'0';
     }
     /*Serial.print("De code is veranderd naar ");
-      for (int i = 0; i < 4; i++)
-      {
-        Serial.print(code[i]);
-      }
-    Serial.println(); 
-    */
+    for (int i = 0; i < 4; i++)
+    {Serial.print(code[i]);}
+    Serial.println(); */
     garbage_Ready = true;
   }
 
@@ -246,9 +238,9 @@ void callback(char *topic, byte *message, unsigned int length)
   }
 }
 
+//Default code gekreven van onderzoeksgroep dramco om wifi connectie te realiseren.
 void setup_wifi()
 {
-  //Default code gekreven van onderzoeksgroep dramco.
   delay(10);
   Serial.println("Connecting to WiFi..");
 
@@ -279,7 +271,6 @@ void setup_lcd(){
 }
 
 void tip(){
-
   //tip printen
   lcd.init();
   lcd.clear();         
