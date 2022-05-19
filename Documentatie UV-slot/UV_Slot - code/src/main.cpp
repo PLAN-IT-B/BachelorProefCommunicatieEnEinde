@@ -32,7 +32,6 @@ bool Prev_energie = false;
 int cinput[4];
 int code[] = {-1,-1,-1,-1};
 
-
 //keypad configuratie
 const byte ROWS = 4; 
 const byte COLS = 3; 
@@ -55,10 +54,10 @@ Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS)
 LiquidCrystal_I2C lcd(0x27,20,4);
 int c =5; //pointer x-as
 
-//Relais 
+//Relaïs 
 const int Relais_UV = 32;
 
-// Global Variables
+//Globale variabelen
 long int count_time = 3600000;       // 1000ms in 1sec, 60secs in 1min, 60mins in 1hr. So, 1000x60x60 = 3600000ms = 1hr
 unsigned long NewTime = 0;
 unsigned long current_time = 0;
@@ -66,7 +65,7 @@ unsigned long previous_time = 0;
 volatile short int start_pause = 0;
 int seconds, minutes;             // For switching between left & right part of the display(Even = left, Odd = right)
 
-//functies
+//functies definieren
 void setup_wifi();
 void setup_lcd();
 void tip();
@@ -77,7 +76,6 @@ void callback(char *topic, byte *message, unsigned int length);
 
 
 void setup() {
-
   pinMode(Relais_UV,OUTPUT); 
   Serial.begin (115200);
   digitalWrite(Relais_UV, LOW);
@@ -128,75 +126,77 @@ void loop() {
   {
     lastMsg = now;
   }
-  
-  char key = customKeypad.getKey();
 
-  //Bij het veranderen van het energie nice
+  //Bij het veranderen van het energie niveau
   if(Prev_energie != Curr_energie){
     if(Curr_energie == true){
       setup_lcd();
       Prev_energie = Curr_energie;
-      Serial.println("keypad aan");
+      //Serial.println("keypad aan");
     }else if(Curr_energie == false){
       lcd.clear();
       lcd.noBacklight();
       Prev_energie = Curr_energie;
-      
-      Serial.println("keypad uit");
+      //Serial.println("keypad uit");
     }
   }
-      //Als de knop wordt ingedrukt
+  
+  //Als de knop wordt ingedrukt, het keypad niet geblokkeerd is en er genoeg energie is.
+  char key = customKeypad.getKey();
   if(key && blockKeypad == false && Curr_energie){
-        /*
-        Serial.print("De waarde uit het keypad is: ");
-        Serial.println(key);
-        */
-
-        //Als # (enter wordt ingedrukt)
-        if(key =='#'){    
-          if(c ==9 ){ //De positie is het laatste cijfer
-            opgelost = true; //Controleer of de code klopt
-            for(int i = 0;i<4;i++){
-              if(code[i]!=cinput[i]){
-                opgelost = false;
-                lcd.setCursor(5,1);
-                lcd.print("____kg");
-                c = 5;
-              }
-            }
-            if (garbage_Ready==false) {
-              tip();
-            }
-            if(opgelost){
-              UV_Enable();   
-              blockKeypad = true;
-            }            
-          }
-        }     
-        else if(key == '*'){ //Als * (terug) wordt ingevuld
-            //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
-          if(c>5){
-            c--;
-            lcd.setCursor(c,1);
-            lcd.print("_");
-            cinput[c-5] = 0;
+    /*
+     Serial.print("De waarde uit het keypad is: ");
+     Serial.println(key);
+    */
+    //Als # (enter wordt ingedrukt)
+    if(key =='#'){    
+      if(c ==9 ){ //De positie is het laatste cijfer
+        opgelost = true; 
+        //Controleer of de code klopt
+        for(int i = 0;i<4;i++){
+          if(code[i]!=cinput[i]){
+            opgelost = false;
+            lcd.setCursor(5,1);
+            lcd.print("____kg");
+            c = 5;
           }
         }
-        else{ //Als er iets anders (cijfer) wordt ingedrukt
-          if(c<9){ //Vul het getal in en schuif 1 plaats op.
-          lcd.setCursor(c,1);
-          lcd.print(key);
-          cinput[c-5]= key-'0';
-          lcd.setCursor(c,1);
-          c++;
-          lcd.display();
-          }    
+        //Als de garbage puzzel nogniet klaar is, gaan we zeggen dat ze moeten focussen op een andere puzzel.
+        if (garbage_Ready==false) {
+          tip();
         }
+        //Als het opgelost is schakel we het UV-licht en blokeren we het keypad voor bugs.
+        if(opgelost){
+          UV_Enable();   
+          blockKeypad = true;
+        }            
+      }
+    }     
+    else if(key == '*'){ //Als * (terug) wordt ingevuld
+      //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
+      if(c>5){
+        c--;
+        lcd.setCursor(c,1);
+        lcd.print("_");
+        cinput[c-5] = 0;
+      }
+    }
+    else{ //Als er iets anders (cijfer) wordt ingedrukt
+      if(c<9){ //Vul het getal in en schuif 1 plaats op.
+        lcd.setCursor(c,1);
+        lcd.print(key);
+        cinput[c-5]= key-'0';
+        lcd.setCursor(c,1);
+        c++;
+        lcd.display();
+      }    
+    }
   }
 }
 
 void callback(char *topic, byte *message, unsigned int length)
 {
+  //Print overzichtelijk uit wat het bericht is en op welk topic dit is toegekomen.
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
@@ -209,23 +209,24 @@ void callback(char *topic, byte *message, unsigned int length)
   }
   Serial.println(" ");
 
-  //Als het een bericht is van de garbadge puzzel, zal het zijn voor de code te veranderen.
+  //Als het een bericht is van de garbadge puzzel, zal het zijn voor de code in te stellen/veranderen.
   if (strcmp(topic,"garbage/eindcode") == 0) 
   {
     for (int i = 0; i < 4; i++)
     {
       code[i] = message[i]-'0';
     }
-    Serial.print("De code is veranderd naar ");
+    /*Serial.print("De code is veranderd naar ");
       for (int i = 0; i < 4; i++)
       {
         Serial.print(code[i]);
       }
     Serial.println(); 
+    */
     garbage_Ready = true;
   }
 
-  //De status van de buffer
+  //De status van de buffer updates bij verandering
   if (strcmp(topic,"TrappenMaar/zone") == 0) {
     if(messageTemp == "groen"){
       Curr_energie = true;
@@ -247,6 +248,7 @@ void callback(char *topic, byte *message, unsigned int length)
 
 void setup_wifi()
 {
+  //Default code gekreven van onderzoeksgroep dramco.
   delay(10);
   Serial.println("Connecting to WiFi..");
 
@@ -264,20 +266,21 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
-
-
 void setup_lcd(){
-  //default lcd display setup
+  //default lcd keypad display
   lcd.init();
   lcd.clear();         
   lcd.backlight(); 
   lcd.setCursor(0,0);
   lcd.print("Voer de code in:");
   lcd.setCursor(5,1);
+  //Dit wordt in kg uitgedrukt zodat de speler de link gaat leggen tussen het totaal gewicht van de garbage puzzel en dit slot.
   lcd.print("____kg");
 }
 
 void tip(){
+
+  //tip printen
   lcd.init();
   lcd.clear();         
   lcd.backlight(); 
@@ -286,11 +289,12 @@ void tip(){
   lcd.setCursor(3,1);
   lcd.print("andere puzzel");
 
-  //oorspronkelijke scherm terugzetten
+  //tijd om te lezen
   delay(5000);
+  
+  //oorspronkelijke scherm terugzetten
   setup_lcd();
 }
-
 
 void reconnect()
 {
@@ -298,16 +302,12 @@ void reconnect()
   while (!client.connected())
   {
     Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    // CREATE UNIQUE client ID!
-    // in Mosquitto broker enable anom. access
     if (client.connect("UV-Slot_ESP"))
     {
       Serial.println("connected");
+      //Tijdens het opstarten een ready signaal sturen naar de eindpuzzel esp.
       client.publish("controlpanel/status", "UV-slot Ready");
-      // Subscribe
-      // Vul hieronder in naar welke directories je gaat luisteren.
-      //Voor de communicatie tussen de puzzels, check "Datacommunicatie.docx". (terug tevinden in dezelfde repository) 
+      //Subscribions
       client.subscribe("controlpanel/reset");
       client.subscribe("garbage/eindcode");
       client.subscribe("TrappenMaar/zone");
@@ -316,14 +316,14 @@ void reconnect()
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 2 seconds");
-      // Wait 5 seconds before retrying
+      // Wait 2 seconds before retrying
       delay(2000);
     }
   }
 }
 
 void UV_Enable(){
-  //Opent de deur van de escape room
+  //schakelt de UV lamp via een relaïs
   digitalWrite(Relais_UV, HIGH);
   lcd.clear();
   lcd.setCursor(4,0);
@@ -331,12 +331,10 @@ void UV_Enable(){
   lcd.setCursor(3,1);
   lcd.print("Fiets maar");
 
+  //zorgen dat deze functie maar één keer wordt uitgevoerd
   opgelost = false;
   for (int i = 0; i < 4; i++)
   {
     cinput[i]=0;
   }
-  //Zeggen tegen de controle esp dat het UV-slot is opgelost!
-  client.publish("controlpanel/UV-slot","UV licht staat geschakeld!");
-
 }
