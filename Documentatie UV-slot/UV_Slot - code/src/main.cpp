@@ -136,10 +136,13 @@ void loop() {
     if(Curr_energie == true){
       setup_lcd();
       Prev_energie = Curr_energie;
+      Serial.println("keypad aan");
     }else if(Curr_energie == false){
       lcd.clear();
       lcd.noBacklight();
       Prev_energie = Curr_energie;
+      
+      Serial.println("keypad uit");
     }
   }
       //Als de knop wordt ingedrukt
@@ -197,15 +200,14 @@ void callback(char *topic, byte *message, unsigned int length)
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
-  String messageTemp = "x";
+  String messageTemp ="";
 
   for (int i = 0; i < length; i++)
   {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
-    Serial.println();
   }
-
+  Serial.println(" ");
 
   //Als het een bericht is van de garbadge puzzel, zal het zijn voor de code te veranderen.
   if (strcmp(topic,"garbage/eindcode") == 0) 
@@ -224,15 +226,14 @@ void callback(char *topic, byte *message, unsigned int length)
   }
 
   //De status van de buffer
-  if (strcmp(topic,"TrappenMaar/zone") == 0) 
-  {
-    if(messageTemp == "Groen"){
+  if (strcmp(topic,"TrappenMaar/zone") == 0) {
+    if(messageTemp == "groen"){
       Curr_energie = true;
     }
-    else if(messageTemp == "Oranje"){
+    else if(messageTemp == "oranje"){
       Curr_energie = true;
     }
-    else if(messageTemp == "Rood"){
+    else if(messageTemp == "rood"){
       Curr_energie = false;
     }
   }
@@ -311,8 +312,7 @@ void reconnect()
       client.subscribe("garbage/eindcode");
       client.subscribe("TrappenMaar/zone");
     }
-    else
-    {
+    else{
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 2 seconds");
