@@ -110,7 +110,9 @@ void setup() {
 
   //lcd setup
   setup_lcd();
-
+  delay(2000);
+  lcd.clear();
+  lcd.noBacklight();
 }
 
 void loop() {
