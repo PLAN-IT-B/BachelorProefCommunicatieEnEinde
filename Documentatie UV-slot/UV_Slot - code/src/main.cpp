@@ -1,10 +1,10 @@
-#include <Arduino.h>
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
-#include <TM1637Display.h>
-#include "Keypad.h"
-#include "WiFi.h"
-#include "PubSubClient.h" //pio lib install "knolleary/PubSubClient"
+#include <Arduino.h>                //Arduino library
+#include <Wire.h>                   
+#include <LiquidCrystal_I2C.h>      //lcd library
+#include <TM1637Display.h>          //clock display library
+#include "Keypad.h"                 //keypad libraray 
+#include "WiFi.h"                   //wifi library
+#include "PubSubClient.h"           //mqtt communication library
 
 #define SSID          "NETGEAR68"
 #define PWD           "excitedtuba713"
