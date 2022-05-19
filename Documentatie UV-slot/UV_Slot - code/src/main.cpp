@@ -129,23 +129,19 @@ void loop() {
   
   char key = customKeypad.getKey();
 
-  if(Prev_energie == Curr_energie){
-
-  }else if(Curr_energie == true){
-    setup_lcd;
-    Prev_energie = Curr_energie;
-  }else if(Curr_energie == false){
-    lcd.clear();
-    lcd.noBacklight();
+  //Bij het veranderen van het energie nice
+  if(Prev_energie != Curr_energie){
+    if(Curr_energie == true){
+      setup_lcd();
+      Prev_energie = Curr_energie;
+    }else if(Curr_energie == false){
+      lcd.clear();
+      lcd.noBacklight();
+      Prev_energie = Curr_energie;
+    }
   }
-
-  
-
-  
-   
       //Als de knop wordt ingedrukt
-      if(key && blockKeypad == false && Curr_energie){
-
+  if(key && blockKeypad == false && Curr_energie){
         /*
         Serial.print("De waarde uit het keypad is: ");
         Serial.println(key);
@@ -191,8 +187,7 @@ void loop() {
           lcd.display();
           }    
         }
-      }
-  
+  }
 }
 
 void callback(char *topic, byte *message, unsigned int length)

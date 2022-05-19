@@ -206,9 +206,6 @@ void loop(){
   if(codeJuist){ //Als de code klopt 
     openSlot();    
   }
-  if(!energie){
-    tip();
-  }
   //Als de knop wordt ingedrukt en de keypad niet geblokt moet worden
   else if(key && !keypadBlocked ){
       /*
@@ -216,7 +213,7 @@ void loop(){
       Serial.println(key);
       */
 
-      //Als # (enter wordt ingedrukt)
+      //Als # (enter wordt ingedrukt) en er is energie
       if(key =='#'){    
         if(c ==12){ //De positie is het laatste cijfer
           codeJuist = true; //Controleer of de code klopt
@@ -227,13 +224,20 @@ void loop(){
              lcd.print("____");
              c = 8;
            }
-         }
-         if(!codeJuist){
+          }
+          if(!codeJuist && energie){
            for (int i = 0; i < 2; i++)
            {client.publish("TrappenMaar/buffer","grote fout");}
-         }
+          }
+          if (!energie){
+            tip();
+            codeJuist = false;
+            lcd.setCursor(8,2);
+            lcd.print("____");
+            c = 8;
+          }
         }
-      }     
+      }
 
       else if(key == '*'){ //Als * (terug) wordt ingevuld
           //Ga 1 terug, vervang het getal door _ en vervang de code door 0 (standaard getal in rij)
@@ -450,9 +454,9 @@ void openSlot(){
 void tip(){
   lcd.clear();        
   lcd.backlight(); 
-  lcd.setCursor(3,1);
+  lcd.setCursor(2,1);
   lcd.print("Dit heeft meer");
-  lcd.setCursor(4,2);
+  lcd.setCursor(5,2);
   lcd.print("energie nodig!");
   delay(6000);
   setup_lcd();
