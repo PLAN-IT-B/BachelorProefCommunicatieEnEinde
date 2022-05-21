@@ -386,7 +386,7 @@ void reconnect(){
   while (!client.connected())
   {
     Serial.print("Attempting MQTT connection...");
-    if (client.connect("Eindpuzzel_ESP"))
+    if (client.connect("Puzzelbox_ESP"))
     {
     Serial.println("connected");
     //Na de geforceerde reconnect worden er hier berichten gestuurd.
